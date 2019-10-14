@@ -16,7 +16,7 @@ spring:
 
 ---
 spring:
-  profiles: gateway-client-1
+  profiles: pong-instance-1
   cloud:
     gateway:
       rsocket:
@@ -24,14 +24,11 @@ spring:
           route-id: 3
           service-name: pong
           tags:
-            INSTANCE_NAME: pong3
-          broker:
-            host: localhost
-            port: 7002
+            INSTANCE_NAME: pong1
 
 ---
 spring:
-  profiles: pong4
+  profiles: pong-instance-2
   cloud:
     gateway:
       rsocket:
@@ -39,12 +36,26 @@ spring:
           route-id: 4
           service-name: pong
           tags:
-            INSTANCE_NAME: pong4
+            INSTANCE_NAME: pong2
+
+---
+spring:
+  profiles: gateway-instance-1
+  cloud:
+    gateway:
+      rsocket:
+        client:
+          broker:
+            host: localhost
+            port: 7002
             
 ---
 spring:
-  profiles: gateway-client-2
-  cloud.gateway.rsocket.client:
-    broker:
-      host: localhost
-      port: 7003
+  profiles: gateway-instance-2
+  cloud:
+    gateway:
+      rsocket:
+        client:
+          broker:
+            host: localhost
+            port: 7003

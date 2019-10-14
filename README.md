@@ -23,11 +23,13 @@ And in ping you should see logs like:
 
 ## Direct Mode: No Gateway
 
-Run pong with `spring.profiles.active=server`. Then run ping.
+Run pong with `spring.profiles.active=server`. 
+Then run ping with `spring.profiles.active=gateway-instance-1`
 
 ## Single Gateway Mode
 
-Run gateway first. Then run ping. 
+Run gateway first. 
+Then run ping with `spring.profiles.active=ping-instance-1,gateway-instance-1`.
 
 You should see backpressure logs like:
 ```
@@ -35,7 +37,7 @@ You should see backpressure logs like:
 2019-08-09 11:31:00.811  INFO 15199 --- [     parallel-2] o.s.c.r.s.ping.PingApplication$Ping      : Dropped payload ping1
 ```
 
-Run pong. 
+Run pong with `spring.profiles.active=pong-instance-1,gateway-instance-1`.
 
 ## Gateway Cluster Mode
 

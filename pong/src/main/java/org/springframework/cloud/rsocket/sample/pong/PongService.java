@@ -23,16 +23,6 @@ public class PongService {
 		Boolean isClient = env.getProperty("pong.client", Boolean.class, true);
 
 		log.info("Starting Pong isClient: " + isClient);
-
-		if (!isClient) {
-			/*FIXME: RSocketFactory.receive()
-					.addServerPlugin(interceptor)
-					.acceptor(this)
-					.transport(TcpServerTransport.create(port)) // listen on port
-					.start()
-					.subscribe();*/
-		}
 	}
-
 }
 

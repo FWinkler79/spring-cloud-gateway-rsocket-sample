@@ -42,5 +42,4 @@ public class PongController {
 			throw new IllegalArgumentException("Value must be ping, not " + in);
 		}
 	}
-
 }
