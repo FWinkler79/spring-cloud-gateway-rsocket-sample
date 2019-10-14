@@ -4,6 +4,13 @@ server:
 logging:
   level:
     org.springframework.messaging.rsocket: INFO
+    
+spring:
+  cloud:
+    gateway:
+      rsocket:
+        client:
+          service-name: pong
 
 ---
 spring:
@@ -22,7 +29,6 @@ spring:
       rsocket:
         client:
           route-id: 3
-          service-name: pong
           tags:
             INSTANCE_NAME: pong1
 
@@ -34,13 +40,13 @@ spring:
       rsocket:
         client:
           route-id: 4
-          service-name: pong
           tags:
             INSTANCE_NAME: pong2
 
 ---
 spring:
   profiles: gateway-instance-1
+  
   cloud:
     gateway:
       rsocket:
@@ -48,10 +54,11 @@ spring:
           broker:
             host: localhost
             port: 7002
-            
+                        
 ---
 spring:
   profiles: gateway-instance-2
+  
   cloud:
     gateway:
       rsocket:
