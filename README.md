@@ -50,7 +50,8 @@ You should see:
 
 ## Gateway Cluster Mode
 
-Run gateway for first node. The run another gateway with `spring.profiles.active=gateway2`
+Run a Gateway instance.
+Run a Gateway instance with `spring.profiles.active=gateway-instance-2`.
 
 You should see logs like this in 2nd gateway node:
 ```
@@ -65,15 +66,16 @@ And in the first gateway node:
 2019-08-09 11:36:12.576 DEBUG 19475 --- [or-http-epoll-2] o.s.c.g.r.s.SocketAcceptorFilterChain    : filter chain completed with success
 ```
 
-Run ping, you should see backpressure logs as above.
+Start Ping with `spring.profiles.active=ping-instance-1,gateway-instance-1`
+You should see backpressure logs as above.
 
-Run pong with `spring.profiles.active=gateway2`.
-
+Start Pong with `spring.profiles.active=pong-instance-1,gateway-instance-2`
 You should see successful log messages in ping and pong.
 
 ## Additional ping client
 
-During any mode, you can run another ping client with `spring.profiles.active=ping2`. The default ping client uses the 'request channel' RSocket method, where ping 2 uses 'request reply'.
+During any mode, you can run another ping client with `spring.profiles.active=ping-instance-2,gateway-instance-1`. 
+The default ping client uses the 'request channel' RSocket method, where ping 2 uses 'request reply'.
 
 The logs in pong will now show additional client pings such as:
 ```

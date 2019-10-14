@@ -12,10 +12,12 @@ logging:
     
 ---
 spring:
-  profiles: gateway2
+  profiles: gateway-instance-2
+  
   rsocket:
     server:
       port: 7003
+  
   cloud:
     gateway:
       rsocket:
