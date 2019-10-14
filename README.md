@@ -39,6 +39,15 @@ You should see backpressure logs like:
 
 Run pong with `spring.profiles.active=pong-instance-1,gateway-instance-1`.
 
+You should see:
+
+```
+2019-08-09 11:32:19.480  INFO 16077 --- [tor-tcp-epoll-1] o.s.c.r.s.ping.PingApplication$Ping      : received pong(1) in Ping1
+2019-08-09 11:32:20.189  INFO 16077 --- [tor-tcp-epoll-1] o.s.c.r.s.ping.PingApplication$Ping      : received pong(2) in Ping1
+```
+
+... i.e. the connection between Ping and Pong has been established via the Gateway.
+
 ## Gateway Cluster Mode
 
 Run gateway for first node. The run another gateway with `spring.profiles.active=gateway2`
