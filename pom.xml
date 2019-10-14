@@ -22,7 +22,7 @@
 	<modules>
 		<module>ping</module>
 		<module>pong</module>
-		<module>gateway</module>
+		<module>spring-gateway</module>
 	</modules>
 
 	<dependencyManagement>

@@ -2,8 +2,6 @@ package org.springframework.cloud.rsocket.sample.pong;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import org.springframework.cloud.gateway.rsocket.client.BrokerClient;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.env.Environment;
 import org.springframework.messaging.rsocket.RSocketRequester;
