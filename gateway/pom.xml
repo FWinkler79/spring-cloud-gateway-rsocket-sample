@@ -8,9 +8,9 @@
 		<version>0.0.1-SNAPSHOT</version>
 		<relativePath>..</relativePath>
 	</parent>
-	<artifactId>gateway</artifactId>
-	<name>gateway</name>
-	<description>gateway</description>
+	<artifactId>spring-gateway</artifactId>
+	<name>spring-gateway</name>
+	<description>spring-sgateway</description>
 
 	<properties>
 		<java.version>1.8</java.version>
