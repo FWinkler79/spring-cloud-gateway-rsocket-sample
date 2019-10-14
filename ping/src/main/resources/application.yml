@@ -29,7 +29,6 @@ spring:
           broker:
             host: localhost
             port: 7003
-
 --- 
 spring:
   profiles: ping-instance-1

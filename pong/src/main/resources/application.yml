@@ -11,7 +11,6 @@ spring:
       rsocket:
         client:
           service-name: pong
-
 ---
 spring:
   profiles: server
@@ -20,7 +19,6 @@ spring:
     server:
       transport: tcp
       port: 7002
-
 ---
 spring:
   profiles: pong-instance-1
@@ -31,7 +29,6 @@ spring:
           route-id: 3
           tags:
             INSTANCE_NAME: pong1
-
 ---
 spring:
   profiles: pong-instance-2
@@ -42,7 +39,6 @@ spring:
           route-id: 4
           tags:
             INSTANCE_NAME: pong2
-
 ---
 spring:
   profiles: gateway-instance-1
@@ -53,8 +49,7 @@ spring:
         client:
           broker:
             host: localhost
-            port: 7002
-                        
+            port: 7002                       
 ---
 spring:
   profiles: gateway-instance-2
