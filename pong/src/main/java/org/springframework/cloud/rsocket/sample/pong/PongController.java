@@ -28,7 +28,7 @@ public class PongController {
 
 	private void logPings(String str) {
 		int received = pingsReceived.incrementAndGet();
-		log.info("received " + str + "("+received+") in Pong");
+		log.info("received {}({}) in Pong", str, received);
 	}
 
 	String reply(String in) {

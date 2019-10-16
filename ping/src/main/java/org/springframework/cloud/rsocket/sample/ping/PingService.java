@@ -5,79 +5,97 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import reactor.core.publisher.Flux;
-
 import org.springframework.cloud.gateway.rsocket.client.BrokerClient;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.PayloadApplicationEvent;
 import org.springframework.messaging.rsocket.RSocketRequester;
 import org.springframework.stereotype.Service;
 
+import lombok.extern.slf4j.Slf4j;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
+@Slf4j
 @Service
 public class PingService implements ApplicationListener<PayloadApplicationEvent<RSocketRequester>> {
 
-	private static final Logger logger = LoggerFactory.getLogger(PingService.class);
+  private final BrokerClient gatewayClient;
+  private final PingProperties pingProperties;
+  private final AtomicInteger pongsReceived = new AtomicInteger();
 
-	private final BrokerClient client;
+  public PingService(BrokerClient client, PingProperties properties) {
+    this.gatewayClient = client;
+    this.pingProperties = properties;
+  }
 
-	private final PingProperties properties;
+  @Override
+  public void onApplicationEvent(PayloadApplicationEvent<RSocketRequester> event) {
+    log.info("Starting Ping for Route ID: {} - Request type: {}", gatewayClient.getProperties().getRouteId(), pingProperties.getRequestType());
+    RSocketRequester requester = event.getPayload();
 
-	private final AtomicInteger pongsReceived = new AtomicInteger();
+    switch (pingProperties.getRequestType()) {
+      case REQUEST_CHANNEL:
+        Flux<String> pingFlux = getPingFlux();
+        requestPongFlux(requester, pingFlux);
+        break;
+        
+      case REQUEST_RESPONSE:
+        Flux.interval(Duration.ofSeconds(1))
+            .flatMap(tick -> {
+               String ping = getPing(tick);
+               return requestPong(requester, ping);
+            })
+            .subscribe();
+        break;
+  
+      case ACTUATOR:
+        requester.route("hello").metadata(gatewayClient.forwarding(fwd -> fwd.serviceName("gateway").disableProxy()))
+            .data("ping").retrieveMono(String.class).doOnNext(s -> log.info("received from actuator: " + s)).then()
+            .block();
+        break;
+    }
+  }
 
-	public PingService(BrokerClient client, PingProperties properties) {
-		this.client = client;
-		this.properties = properties;
-	}
+  private Mono<String> requestPong(RSocketRequester requester, String ping) {
+    return requester.route("pong-rr")
+              .metadata(gatewayClient.forwarding("pong"))
+              .data(ping)
+              .retrieveMono(String.class)
+              .doOnNext(this::logPongs);
+  }
 
-	@Override
-	public void onApplicationEvent(PayloadApplicationEvent<RSocketRequester> event) {
-		logger.info("Starting Ping" + client.getProperties().getRouteId() + " request type: " + properties.getRequestType());
-		//RSocketRequester requester = client.connect().retry(5).block();
-		RSocketRequester requester = event.getPayload();
+  private void requestPongFlux(RSocketRequester requester, Flux<String> pingFlux) {
+    requester.route("pong-rc")
+        .data(pingFlux)
+        .retrieveFlux(String.class) // expect back a continuous stream of pongs.
+        .doOnNext(this::logPongs)   // log the pongs as they come in.
+        .doOnError((exception) -> { // log any error that may occur.
+          log.error("Received an error from server.", exception);
+          log.error("Retrying");
+        })
+        .retry() // retry, i.e. re-subscribe indefinitely in case of errors.
+        .subscribe();
+  }
+  
+  private Flux<String> getPingFlux() {
+           // Forever, with a period of 1 second...
+    return Flux.interval(Duration.ofSeconds(1))  
+               // ... repeatedly send the Ping payload ...
+               .map(this::getPing)           
+               // ... and if the server pushes back, drop the ping.
+               .onBackpressureDrop(payload -> log.info("Backpressure applied, dropping payload " + payload))
+               // ... log any error that might occur.
+               .doOnError((exception) -> {
+                 log.info("Error received in ping flux.", exception);
+               });
+  }
 
-		switch (properties.getRequestType()) {
-			case REQUEST_RESPONSE:
-				Flux.interval(Duration.ofSeconds(1))
-						.flatMap(i -> requester.route("pong-rr")
-								.metadata(client.forwarding("pong"))
-								.data("ping" + i)
-								.retrieveMono(String.class)
-								.doOnNext(this::logPongs))
-						//.then().block();
-						.subscribe();
-				break;
+  private String getPing(long i) {
+    return "ping" + i;
+  }
 
-			case REQUEST_CHANNEL:
-				requester.route("pong-rc")
-						// metadata not needed. Auto added with gateway rsocket client via properties
-						//.metadata(client.forwarding(builder -> builder.serviceName("pong").with("multicast", "true")))
-						.data(Flux.interval(Duration.ofSeconds(1)).map(this::getPayload)
-								.onBackpressureDrop(payload -> logger
-										.info("Backpressure applied, dropping payload " + payload)))
-						.retrieveFlux(String.class)
-						.doOnNext(this::logPongs)
-						//.then().block();
-						.subscribe();
-				break;
-
-			case ACTUATOR:
-				requester.route("hello")
-						.metadata(client.forwarding(fwd -> fwd.serviceName("gateway")
-								.disableProxy()))
-						.data("ping")
-						.retrieveMono(String.class)
-						.doOnNext(s -> logger.info("received from actuator: " + s))
-						.then().block();
-				break;
-		}
-	}
-
-	private String getPayload(long i) {
-		return "ping" + i;
-	}
-
-	private void logPongs(String payload) {
-		int received = pongsReceived.incrementAndGet();
-		logger.info("received " + payload + "(" + received + ") in Ping" + client.getProperties().getRouteId());
-	}
+  private void logPongs(String payload) {
+    int received = pongsReceived.incrementAndGet();
+    log.info("received {}({}) in Ping for route ID {}", payload, received, gatewayClient.getProperties().getRouteId());
+  }
 }

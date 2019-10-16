@@ -42,7 +42,10 @@ spring:
             INSTANCE_NAME: ping1
           forwarding:
             pong-rc:
-              service_name: pong            
+              service_name: pong
+ping:
+  request-type: request_channel
+               
 ---
 spring:
   profiles: ping-instance-2

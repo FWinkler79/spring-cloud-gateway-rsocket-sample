@@ -51,7 +51,7 @@ You should see:
 ## Gateway Cluster Mode
 
 Run a Gateway instance.
-Run a Gateway instance with `spring.profiles.active=gateway-instance-2`.
+Run a second Gateway instance with `spring.profiles.active=gateway-instance-2`.
 
 You should see logs like this in 2nd gateway node:
 ```
@@ -75,7 +75,7 @@ You should see successful log messages in ping and pong.
 ## Additional ping client
 
 During any mode, you can run another ping client with `spring.profiles.active=ping-instance-2,gateway-instance-1`. 
-The default ping client uses the 'request channel' RSocket method, where ping 2 uses 'request reply'.
+By default ping client (`ping-instance-1`) uses the 'request channel' RSocket method, where ping 2 (`ping-instance-2`) uses 'request reply'.
 
 The logs in pong will now show additional client pings such as:
 ```
@@ -86,3 +86,90 @@ The logs in pong will now show additional client pings such as:
 ## Profile Specific Configuration
 
 To see what each profile is setting, see the `application.yml` for each individual project. Each profile is another yaml document.
+
+## Advanced Tests
+
+### Failure Resiliency 1
+
+Start two Gateway instances:
+1. Run Gateway instance 1
+1. Run Gateway instance 2 with `spring.profiles.active=gateway-instance-2`. 
+1. Run ping instance 1 with `spring.profiles.active=ping-instance-1,gateway-instance-1`
+
+You should see the backpressure messages from above.
+Now start two pong instances:
+
+1. Run pong instance 1 with `spring.profiles.active=pong-instance-1,gateway-instance-2`
+1. Run pong instance 2 with `spring.profiles.active=pong-instance-2,gateway-instance-2`
+
+You should now see pong messages arriving in ping's console output. Likewise, one of the two pong instances will print that it received pings.
+
+Now, stop one pong instance.
+
+In the output of ping you should see the following:
+
+```
+2019-10-16 15:00:28.749 ERROR 98077 --- [actor-tcp-nio-1] o.s.c.rsocket.sample.ping.PingService    : Received an error from server.
+
+io.rsocket.exceptions.ApplicationErrorException: 
+	at io.rsocket.exceptions.Exceptions.from(Exceptions.java:45) ~[rsocket-core-1.0.0-RC5.jar:na]
+	at io.rsocket.RSocketRequester.handleFrame(RSocketRequester.java:556) ~[rsocket-core-1.0.0-RC5.jar:na]
+...
+
+2019-10-16 15:00:28.750 ERROR 98077 --- [actor-tcp-nio-1] o.s.c.rsocket.sample.ping.PingService    : Retrying
+```
+
+After that you should see ping retry immediately, and see the pongs continuing - this time from the second, remaining pong instance.
+
+### Failure Resiliency 2
+
+Start two Gateway instances:
+1. Run Gateway instance 1
+1. Run Gateway instance 2 with `spring.profiles.active=gateway-instance-2`. 
+1. Run ping instance 1 with `spring.profiles.active=ping-instance-1,gateway-instance-1`
+
+You should see the backpressure messages from above.
+Now start a single pong instance:
+
+1. Run pong instance 1 with `spring.profiles.active=pong-instance-1,gateway-instance-2`
+
+You should now see pong messages arriving in ping's console output. Likewise, one of the two pong instances will print that it received pings.
+
+Now, stop the pong instance.
+
+In the output of ping you should see the following:
+
+```
+2019-10-16 15:00:28.749 ERROR 98077 --- [actor-tcp-nio-1] o.s.c.rsocket.sample.ping.PingService    : Received an error from server.
+
+io.rsocket.exceptions.ApplicationErrorException: 
+	at io.rsocket.exceptions.Exceptions.from(Exceptions.java:45) ~[rsocket-core-1.0.0-RC5.jar:na]
+	at io.rsocket.RSocketRequester.handleFrame(RSocketRequester.java:556) ~[rsocket-core-1.0.0-RC5.jar:na]
+...
+
+2019-10-16 15:00:28.750 ERROR 98077 --- [actor-tcp-nio-1] o.s.c.rsocket.sample.ping.PingService    : Retrying
+```
+
+Now start the pong instance again with `spring.profiles.active=pong-instance-1,gateway-instance-2`.
+
+Ping should continue to receive pongs now:
+
+```
+2019-10-16 15:04:40.477  INFO 98077 --- [actor-tcp-nio-1] o.s.c.rsocket.sample.ping.PingService    : received pong(765) in Ping for route ID 1
+2019-10-16 15:04:40.486  INFO 98077 --- [actor-tcp-nio-1] o.s.c.rsocket.sample.ping.PingService    : received pong(766) in Ping for route ID 1
+2019-10-16 15:04:40.486  INFO 98077 --- [actor-tcp-nio-1] o.s.c.rsocket.sample.ping.PingService    : received pong(767) in Ping for route ID 1
+2019-10-16 15:04:40.486  INFO 98077 --- [actor-tcp-nio-1] o.s.c.rsocket.sample.ping.PingService    : received pong(768) in Ping for route ID 1
+2019-10-16 15:04:40.486  INFO 98077 --- [actor-tcp-nio-1] o.s.c.rsocket.sample.ping.PingService    : received pong(769) in Ping for route ID 1
+2019-10-16 15:04:40.486  INFO 98077 --- [actor-tcp-nio-1] o.s.c.rsocket.sample.ping.PingService    : received pong(770) in Ping for route ID 1
+2019-10-16 15:04:40.487  INFO 98077 --- [actor-tcp-nio-1] o.s.c.rsocket.sample.ping.PingService    : received pong(771) in Ping for route ID 1
+2019-10-16 15:04:40.487  INFO 98077 --- [actor-tcp-nio-1] o.s.c.rsocket.sample.ping.PingService    : received pong(772) in Ping for route ID 1
+2019-10-16 15:04:40.487  INFO 98077 --- [actor-tcp-nio-1] o.s.c.rsocket.sample.ping.PingService    : received pong(773) in Ping for route ID 1
+2019-10-16 15:04:40.487  INFO 98077 --- [actor-tcp-nio-1] o.s.c.rsocket.sample.ping.PingService    : received pong(774) in Ping for route ID 1
+2019-10-16 15:04:40.487  INFO 98077 --- [actor-tcp-nio-1] o.s.c.rsocket.sample.ping.PingService    : received pong(775) in Ping for route ID 1
+2019-10-16 15:04:40.487  INFO 98077 --- [actor-tcp-nio-1] o.s.c.rsocket.sample.ping.PingService    : received pong(776) in Ping for route ID 1
+```
+
+❗️**Note**: As soon as pong is back up, ping will receive all the previous pong's it was requesting while pong was down. This means that currently, the Gateway buffers ping's requests and forwards them to pong, once it is back.
+This is actually not the intended behavior of Gateway. Instead, Gateway should apply maximum backpressure to ping, forcing ping to stop sending pings or dropping them.
+Gateway already does that when ping is started before pong is available. For some reason it does not, when pong goes away while ping is still there. We consider this a bug in Gateway.
+
