@@ -27,7 +27,7 @@ spring:
       rsocket:
         client:
           route-id: 3
-          tags:
+          tags: # client metadata
             INSTANCE_NAME: pong1
 ---
 spring:
@@ -37,7 +37,7 @@ spring:
       rsocket:
         client:
           route-id: 4
-          tags:
+          tags: # client metadata
             INSTANCE_NAME: pong2
 ---
 spring:

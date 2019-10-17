@@ -38,7 +38,7 @@ spring:
       rsocket:
         client:
           route-id: 1
-          tags:
+          tags: # client metadata
             INSTANCE_NAME: ping1
           forwarding:
             pong-rc:
@@ -55,7 +55,7 @@ spring:
       rsocket:
         client:
           route-id: 2
-          tags:
+          tags: # client metadata
             INSTANCE_NAME: ping2
 ping:
   request-type: request_response
